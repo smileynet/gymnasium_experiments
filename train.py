@@ -30,7 +30,7 @@ def train_model(
     total_timesteps,
     save_path,
     n_eval_episodes=10,
-    eval_freq=10000,
+    eval_freq=100000,
     n_epochs=10,
     early_stopping_patience=3,
 ):
