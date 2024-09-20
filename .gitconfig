@@ -1,0 +1,27 @@
+user]
+        name = Sam Biggins
+        email = sambiggins@gmail.com
+[filter "lfs"]
+        clean = git-lfs clean -- %f
+        smudge = git-lfs smudge -- %f
+        process = git-lfs filter-process
+        required = true
+[core]
+  editor = vim
+  autocrlf = input
+[init]
+  defaultBranch = main
+[diff]
+  tool = vscode
+[difftool "vscode"]
+  cmd = code --wait --diff $LOCAL $REMOTE
+[merge]
+  tool = vscode
+[mergetool "vscode"]
+  cmd = code --wait $MERGED
+[tag]
+       forceSignAnnotated = true
+[credential "https://huggingface.co"]
+        provider = generic
+[rerere]
+        enabled = true

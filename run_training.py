@@ -1,10 +1,12 @@
 # train.py
 
 import os
+import warnings
+
 from dotenv import load_dotenv
+
 from model import create_model, load_model, train_model
 from utils import parse_arguments, setup_logging
-import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 load_dotenv()

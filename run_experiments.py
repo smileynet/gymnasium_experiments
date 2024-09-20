@@ -1,6 +1,8 @@
-from optimize import run_optimization
-from train import train_model
 import optuna
+from train import train_model
+
+from optimize import run_optimization
+
 
 def run_experiment(experiment_config):
     study_name = experiment_config['study_name']

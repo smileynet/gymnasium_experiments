@@ -1,7 +1,9 @@
 import os
-import optuna
+
 import matplotlib.pyplot as plt
-from optuna.visualization import plot_param_importances, plot_optimization_history
+import optuna
+from optuna.visualization import plot_optimization_history, plot_param_importances
+
 
 # Function to load study from URL
 def load_study_from_url(study_name, url):

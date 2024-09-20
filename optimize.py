@@ -1,6 +1,7 @@
 import optuna
 from train import train_model
 
+
 def create_objective(env_name, total_timesteps):
     def objective(trial):
         # Define the hyperparameters to optimize

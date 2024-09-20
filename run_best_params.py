@@ -1,8 +1,9 @@
-import optuna
 import argparse
 import logging
-import sys
 import os
+import sys
+
+import optuna
 from dotenv import load_dotenv
 from train import train_model
 

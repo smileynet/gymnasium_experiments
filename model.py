@@ -1,6 +1,7 @@
 # model.py
 
 import os
+
 import torch
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import (
@@ -8,6 +9,7 @@ from stable_baselines3.common.callbacks import (
     CheckpointCallback,
     EvalCallback,
 )
+
 from environment import create_env, create_eval_env
 
 LOG_DIR = os.getenv("LOG_DIR", "./logs")
