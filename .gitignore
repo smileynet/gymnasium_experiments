@@ -1,3 +1,12 @@
+#project
+data/
+logs/
+models/
+examples/
+archive/
+.idea/
+.gradient/
+
 # Virtual Environment
 .venv
 env/
