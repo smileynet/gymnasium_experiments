@@ -2,6 +2,7 @@ import optuna
 import argparse
 import logging
 import sys
+import os
 from dotenv import load_dotenv
 from train import train_model
 
@@ -14,13 +15,30 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def get_db_url():
+    db_name = os.getenv('DB_NAME', 'optuna')
+    db_user = os.getenv('DB_USER')
+    db_password = os.getenv('DB_PASSWORD')
+    db_host = os.getenv('DB_HOST')
+    db_port = os.getenv('DB_PORT', '3306')
+    db_ssl_mode = os.getenv('DB_SSL_MODE', 'require')
+
+    if all([db_user, db_password, db_host]):
+        return f"mysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?ssl_mode={db_ssl_mode}"
+    return None
+
 def load_best_params(study_name, storage=None):
     try:
-        if storage:
-            study = optuna.load_study(study_name=study_name, storage=storage)
+        if storage is None:
+            storage = get_db_url()
+            if storage:
+                logger.info("Using database URL from environment variables.")
+            else:
+                raise ValueError("No storage provided and no valid environment variables found.")
         else:
-            raise ValueError("Storage must be provided to load an existing study.")
+            logger.info("Using provided storage URL.")
 
+        study = optuna.load_study(study_name=study_name, storage=storage)
         best_trial = study.best_trial
         best_params = best_trial.params
         logger.info(f"Successfully loaded best parameters for study: {study_name}")
@@ -35,7 +53,6 @@ def load_best_params(study_name, storage=None):
         logger.error(f"Error loading best parameters: {str(e)}")
         raise
 
-
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Run training with best parameters from an Optuna study."
@@ -44,7 +61,7 @@ def parse_arguments():
         "--study_name", type=str, required=True, help="Name of the Optuna study"
     )
     parser.add_argument(
-        "--storage", type=str, required=True, help="Storage URL for the Optuna study"
+        "--storage", type=str, help="Storage URL for the Optuna study (overrides environment variables if provided)"
     )
     return parser.parse_args()
 
