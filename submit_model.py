@@ -1,43 +1,9 @@
-import gymnasium as gym
 import os
 from dotenv import load_dotenv
-import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.vec_env import VecVideoRecorder
 from huggingface_sb3 import package_to_hub
-
-
-def dry_run(model, env_id, n_eval_episodes=10, video_length=1000):
-    # Create the evaluation environment
-    eval_env = make_vec_env(env_id, n_envs=1)
-
-    # Evaluate the model
-    mean_reward, std_reward = evaluate_policy(
-        model, eval_env, n_eval_episodes=n_eval_episodes
-    )
-    print(f"Mean reward: {mean_reward:.2f} +/- {std_reward:.2f}")
-
-    # Create a video of the model's performance
-    video_env = VecVideoRecorder(
-        eval_env,
-        "videos",
-        record_video_trigger=lambda x: x == 0,
-        video_length=video_length,
-        name_prefix=f"{env_id}-preview",
-    )
-
-    obs = video_env.reset()
-    for _ in range(video_length):
-        action, _ = model.predict(obs, deterministic=True)
-        obs, _, done, _ = video_env.step(action)
-        if done:
-            obs = video_env.reset()
-
-    video_env.close()
-    print(f"Preview video saved in 'videos' directory")
-
+from evaluate_model import evaluate_and_record
 
 # Load environment variables
 load_dotenv()
@@ -47,13 +13,16 @@ username = os.getenv("HF_USERNAME")
 if not username:
     raise ValueError("HF_USERNAME not set in .env file")
 
+# Retrieve the environment ID from the environment variable
+env_id = os.getenv("ENV_NAME", "LunarLander-v2")  # Default to "LunarLander-v2" if not set
+output_dir = os.getenv("OUTPUTS", "outputs")
+
 # Create the environment
-env_id = "LunarLander-v2"
 env = make_vec_env(env_id, n_envs=1)
 
 # Load the best model
 model_path = os.path.join("models", "best_model.zip")
-model = PPO.load(model_path, env=env)
+model = PPO.load(model_path)
 
 # Define model architecture
 model_architecture = "PPO"
@@ -61,8 +30,8 @@ model_architecture = "PPO"
 # Create repo ID
 repo_id = f"{username}/{model_architecture}-{env_id}"
 
-# Perform dry run
-dry_run(model, env_id)
+# Evaluate and record
+mean_reward, std_reward = evaluate_and_record(model, env_id, output_dir=output_dir)
 
 # Ask user if they want to submit to Hugging Face Hub
 submit = input("Do you want to submit the model to Hugging Face Hub? (y/n): ").lower()

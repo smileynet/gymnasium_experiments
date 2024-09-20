@@ -2,14 +2,17 @@ import optuna
 import argparse
 import logging
 import sys
+from dotenv import load_dotenv
 from train import train_model
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
 
 def load_best_params(study_name, storage=None):
     try:
@@ -43,29 +46,7 @@ def parse_arguments():
     parser.add_argument(
         "--storage", type=str, required=True, help="Storage URL for the Optuna study"
     )
-    parser.add_argument(
-        "--env_name", type=str, required=True, help="Name of the Gym environment"
-    )
-    parser.add_argument(
-        "--total_timesteps",
-        type=int,
-        required=True,
-        help="Total timesteps for training",
-    )
-    parser.add_argument(
-        "--save_path", type=str, required=True, help="Path to save the trained model"
-    )
-    parser.add_argument(
-        "--n_epochs", type=int, default=10, help="Number of training epochs"
-    )
-    parser.add_argument(
-        "--early_stopping_patience",
-        type=int,
-        default=3,
-        help="Number of evaluations with no improvement after which training will be stopped",
-    )
     return parser.parse_args()
-
 
 def run_training_with_best_params(args):
     try:
@@ -73,14 +54,7 @@ def run_training_with_best_params(args):
         logger.info(f"Best parameters: {best_params}")
 
         logger.info("Starting training process...")
-        model, best_mean_reward = train_model(
-            best_params,
-            args.env_name,
-            args.total_timesteps,
-            args.save_path,
-            n_epochs=args.n_epochs,
-            early_stopping_patience=args.early_stopping_patience,
-        )
+        model, best_mean_reward = train_model(best_params)
         logger.info(
             f"Training completed successfully. Best mean reward: {best_mean_reward:.2f}"
         )
@@ -89,15 +63,14 @@ def run_training_with_best_params(args):
         logger.error(f"An error occurred: {str(e)}")
         raise
 
-
 def main():
     args = parse_arguments()
     try:
         model, best_mean_reward = run_training_with_best_params(args)
+        print(f"Best mean reward {best_mean_reward} for model {model}")
         return 0
     except Exception:
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

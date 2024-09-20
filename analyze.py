@@ -1,7 +1,6 @@
 import os
 import optuna
 import matplotlib.pyplot as plt
-from urllib.parse import urlparse
 from optuna.visualization import plot_param_importances, plot_optimization_history
 
 # Function to load study from URL
