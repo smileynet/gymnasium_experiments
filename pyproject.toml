@@ -1,0 +1,19 @@
+[project]
+name = "gymnasium-experiments"
+version = "0.1.0"
+description = "A collection of gym-type evnvironment related scripts"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gymnasium[box2d]>=0.29.1",
+    "moviepy>=1.0.3",
+    "python-dotenv>=1.0.1",
+    "stable-baselines3>=2.3.2",
+    "torch>=2.4.1",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.6.6",
+
+]

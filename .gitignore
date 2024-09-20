@@ -1,35 +1,19 @@
 #project
 data/
 logs/
+outputs/
 models/
-examples/
-archive/
-.idea/
-.gradient/
 videos/
+examples/
 
-# Virtual Environment
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-pyvenv.cfg
-pip-selfcheck.json
-
-# Python
+# Python bytecode
 __pycache__/
 *.py[cod]
-*$py.class
+
+# C extensions
 *.so
-*.egg-info/
-*.egg
-MANIFEST
-*.manifest
-*.spec
-pip-log.txt
-pip-delete-this-directory.txt
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -44,15 +28,20 @@ sdist/
 var/
 wheels/
 share/python-wheels/
+*.egg-info/
 .installed.cfg
+*.egg
+MANIFEST
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*/.ipynb_checkpoints/*
-profile_default/
-ipython_config.py
+# PyInstaller
+*.manifest
+*.spec
 
-# Testing
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
 htmlcov/
 .tox/
 .nox/
@@ -67,62 +56,104 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# Sphinx
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
 docs/_build/
 
-# Environments
-.env
+# PyBuilder
+.pybuilder/
+target/
 
-# Celery
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
 celerybeat-schedule
 celerybeat.pid
 
-# Cython
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.virtualenvs
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
 cython_debug/
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
-.history/
-*.vsix
+# uv specific
+.uv/
 
-# IDE - JetBrains
+# ruff specific
+.ruff_cache/
+
+# VSCode
+.vscode/
+
+# PyCharm
 .idea/
 
-# OS - Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
-
-# OS - macOS
+# macOS
 .DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
+
+# Windows
+Thumbs.db
+
+# Gradient
+.gradient/
