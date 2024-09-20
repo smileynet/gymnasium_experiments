@@ -14,6 +14,7 @@ import os
 import json
 import argparse
 import logging
+import torch
 from torch.utils.tensorboard import SummaryWriter
 
 # Set up logging
@@ -51,8 +52,17 @@ def train_model(
         eval_env = Monitor(eval_env, "./logs")
         eval_env = DummyVecEnv([lambda: eval_env])
 
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
         # Initialize the agent with given parameters
-        model = PPO("MlpPolicy", env, verbose=1, tensorboard_log="./logs", **params)
+        model = PPO(
+            "MlpPolicy",
+            env,
+            verbose=1,
+            device=device,
+            tensorboard_log="./logs",
+            **params,
+        )
 
         # Configure logger
         new_logger = configure("./logs", ["tensorboard", "stdout"])
