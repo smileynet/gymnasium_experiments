@@ -108,7 +108,8 @@ def main():
             temp_dir = "temp_model_dir"
             os.makedirs(temp_dir, exist_ok=True)
 
-            model.save(os.path.join(temp_dir, "model.zip"))
+            model_filename = f"{model_architecture}-{env_id}.zip"
+            model.save(os.path.join(temp_dir, model_filename))
 
             results_path = os.path.join(outputs_dir, "results.json")
             if os.path.exists(results_path):
@@ -144,6 +145,14 @@ def main():
             with open(os.path.join(temp_dir, "README.md"), "w") as f:
                 f.write(model_card)
 
+            # Create agents.py
+            with open(os.path.join(temp_dir, "agents.py"), "w") as f:
+                f.write(f"""
+from stable_baselines3 import PPO
+
+def get_agent(env):
+    return PPO.load("{model_filename[:-4]}", env=env)
+""")
             try:
                 submit_to_hub(temp_dir, repo_id)
             finally:

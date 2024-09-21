@@ -25,19 +25,21 @@ def generate_model_card(model_name, env_id, mean_reward, std_reward, hyperparame
     Raises:
         ValueError: If HF_USERNAME is not set in the .env file
     """
+
     load_dotenv()
 
     username = os.getenv("HF_USERNAME")
     if not username:
         raise ValueError("HF_USERNAME not set in .env file")
 
-    hyperparams_str = "OrderedDict([\n"
+    hyperparams_str = "{\n"
     for key, value in hyperparameters.items():
         if isinstance(value, str):
-            hyperparams_str += f"    ('{key}', '{value}'),\n"
+            hyperparams_str += f"    '{key}': '{value}',\n"
         else:
-            hyperparams_str += f"    ('{key}', {value}),\n"
-    hyperparams_str += "])"
+            hyperparams_str += f"    '{key}': {value},\n"
+    hyperparams_str += "}"
+
     model_card = f"""
 ---
 library_name: stable-baselines3
@@ -60,7 +62,7 @@ model-index:
 
 # {model_name} Agent playing {env_id}
 
-This is a trained model of a {model_name} agent playing {env_id} using the Stable-Baselines3 library.
+This is a trained model of a {model_name} agent playing {env_id} using the [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) library.
 
 ## Usage
 
@@ -71,7 +73,7 @@ import gymnasium as gym
 from stable_baselines3 import {model_name}
 
 # Create the environment
-env = gym.make("{env_id}", render_mode="human")
+env = gym.make("{env_id}")
 
 # Load the trained model
 model = {model_name}.load("path/to/model.zip")
@@ -88,17 +90,20 @@ while True:
 env.close()
 ```
 
-## Results
-The agent achieved a mean reward of {mean_reward:.2f} +/- {std_reward:.2f} over {os.getenv('N_EVAL_EPISODES', '10')} evaluation episodes.
+## Environment
+The {env_id} environment is part of the [Gymnasium](https://gymnasium.farama.org/) library. 
 
-## Hyperparameters
-The following hyperparameters were used for training:
+## Training
+The model was trained using the following hyperparameters:
 
 ```python
 {hyperparams_str}
 ```
 
+### Results
+The trained agent achieved a mean reward of {mean_reward:.2f} +/- {std_reward:.2f} over {os.getenv('N_EVAL_EPISODES', '10')} evaluation episodes.
 """
+
     return model_card
 
 
