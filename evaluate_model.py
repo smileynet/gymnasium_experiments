@@ -9,12 +9,10 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecVideoRecorder
 
-from submission_context import SubmissionContext
-
 load_dotenv()
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
@@ -42,9 +40,10 @@ def evaluate_and_record(
         def make_env():
             return gym.make(env_id, render_mode="rgb_array")
 
+        logging.debug(f"Loading eval environment for {env_id}")
         eval_env = DummyVecEnv([make_env for _ in range(1)])
-        print(f"Observation space: {eval_env.observation_space}")
-        print(f"Action space: {eval_env.action_space}")
+        logging.debug(f"Observation space: {eval_env.observation_space}")
+        logging.debug(f"Action space: {eval_env.action_space}")
 
         outputs_dir = os.getenv("OUTPUTS_DIR", "outputs")
         os.makedirs(outputs_dir, exist_ok=True)

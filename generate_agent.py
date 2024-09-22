@@ -1,10 +1,11 @@
 import os
-import torch
-from torch import nn
-import numpy as np
-from stable_baselines3 import PPO
+
 import gymnasium as gym
+import numpy as np
+import torch
 from dotenv import load_dotenv
+from stable_baselines3 import PPO
+from torch import nn
 
 
 class Agent(nn.Module):

@@ -69,14 +69,19 @@ while True:
         obs, info = env.reset()
 
 env.close()
-Environment
+```
+
+## Environment
 The {context.env_id} environment is part of the Gymnasium library.
 
-Training
+## Training
 The model was trained using the following hyperparameters:
 
+```python
 {hyperparams_str}
-Results
+```
+
+## Results
 The trained agent achieved a mean reward of {context.results['mean_reward']:.2f} +/- {context.results['std_reward']:.2f} over {context.n_eval_episodes} evaluation episodes. """
 
 
@@ -96,22 +101,9 @@ if __name__ == "__main__":
         if not outputs_dir:
             raise ValueError("OUTPUTS_DIR not set in .env file")
 
-        # Create a real SubmissionContext
-        context = SubmissionContext(
-            temp_dir=outputs_dir,
-            model=None,  # Not needed for model card generation
-            results={"mean_reward": mean_reward, "std_reward": std_reward},
-            env_id=env_id,
-            outputs_dir=outputs_dir,
-            video_name="model_evaluation",  # Default value
-            model_dir=os.getenv("MODEL_DIR", "models"),
-            best_model_name=os.getenv("BEST_MODEL_NAME", "best_model.zip"),
-            model_architecture=model_architecture,
-            n_eval_episodes=n_eval_episodes,
-            hf_token=os.getenv("HF_TOKEN"),
-            hf_username=os.getenv("HF_USERNAME"),
-            hyperparameters=params,
-        )
+        context = SubmissionContext()
+        context.hyperparameters = parse_arguments()
+        context.results = {"mean_reward": mean_reward, "std_reward": std_reward}
 
         context.metadata = {
             "library_name": "stable-baselines3",
