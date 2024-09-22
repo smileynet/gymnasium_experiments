@@ -1,7 +1,10 @@
+import json
 import logging
 import os
 import shutil
+import zipfile
 
+import stable_baselines3
 from huggingface_hub import HfApi, login
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
@@ -16,6 +19,13 @@ from utils import convert_video, get_latest_video, parse_arguments
 class SubmissionHelper:
     def __init__(self):
         self.context = SubmissionContext()
+        self._setup_logging()
+
+    def _setup_logging(self):
+        """Configure logging for the script."""
+        logging.basicConfig(
+            level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+        )
 
     def load_model(self, model_path=None):
         """Load the trained model from the specified path."""
@@ -44,6 +54,7 @@ class SubmissionHelper:
             self._create_metadata()
             self._generate_model_card()
             self._generate_agent_pt()
+            self._generate_config()
             return True
         except Exception as e:
             logging.error(f"Error preparing submission files: {str(e)}")
@@ -84,7 +95,7 @@ class SubmissionHelper:
         generate_model_card(self.context)
         with open(os.path.join(self.context.temp_dir, "README.md"), "w") as f:
             f.write(self.context.model_card)
-        logging.info(
+        logging.debug(
             f"Generated and saved model card to {self.context.temp_dir}/README.md"
         )
 
@@ -95,7 +106,7 @@ class SubmissionHelper:
         success = generate_agent_pt(model_path, self.context.env_id, output_path)
         if not success:
             raise RuntimeError("Failed to generate agent.pt")
-        logging.info(f"Generated agent.pt at {output_path}")
+        logging.debug(f"Generated agent.pt at {output_path}")
 
     def validate_submission_files(self) -> bool:
         """Validate that all required files are present in the temporary directory."""
@@ -105,6 +116,7 @@ class SubmissionHelper:
             "results.json",
             "replay.mp4",
             "README.md",
+            "config.json",
         ]
         missing_files = [
             file
@@ -118,7 +130,7 @@ class SubmissionHelper:
             )
             return False
 
-        logging.info("All required files for submission are present")
+        logging.debug("All required files for submission are present")
         return True
 
     def submit_to_hub(self):
@@ -136,7 +148,7 @@ class SubmissionHelper:
 
             tags = self.context.metadata.get("tags", [])
 
-            logging.info(
+            logging.debug(
                 f"Creating repository {repo_id} on Hugging Face Hub with tags:\n {tags}"
             )
 
@@ -150,6 +162,7 @@ class SubmissionHelper:
                 folder_path=self.context.temp_dir,
                 repo_id=repo_id,
                 repo_type="model",
+                path_in_repo=".",
                 commit_message="Upload model files",
                 commit_description="Uploading model files including README, agent.pt, and metadata",
                 ignore_patterns=[".*"],
@@ -164,6 +177,30 @@ class SubmissionHelper:
             )
             raise
 
+    def _generate_config(self):
+        """Generate a configuration file compatible with the submission format."""
+        model_path = self.context.get_model_path()
+        output_dir = self.context.temp_dir
+
+        model_name = self.context.get_model_name()
+        unzipped_model_dir = os.path.join(output_dir, model_name)
+        os.makedirs(unzipped_model_dir, exist_ok=True)
+
+        with zipfile.ZipFile(model_path, "r") as zip_ref:
+            zip_ref.extractall(unzipped_model_dir)
+
+        with open(os.path.join(unzipped_model_dir, "data")) as json_file:
+            data = json.load(json_file)
+            data["system_info"] = stable_baselines3.get_system_info(print_info=False)[0]
+
+        with open(os.path.join(output_dir, "config.json"), "w") as outfile:
+            json.dump(data, outfile)
+
+        with open(os.path.join(unzipped_model_dir, "data")) as json_file:
+            data = json.load(json_file)
+
+        logging.debug(f"config.json generated at {self.context.temp_dir}")
+
     def _copy_model_zip(self):
         model_path = self.context.get_model_path()
         os.makedirs(self.context.temp_dir, exist_ok=True)
@@ -172,7 +209,7 @@ class SubmissionHelper:
                 model_path,
                 os.path.join(self.context.temp_dir, self.context.best_model_name),
             )
-            logging.info(f"Copied model zip to {self.context.temp_dir}")
+            logging.debug(f"Copied model zip to {self.context.temp_dir}")
         else:
             raise FileNotFoundError(f"Model zip not found at {model_path}")
 
@@ -183,7 +220,7 @@ class SubmissionHelper:
             shutil.copy(
                 results_path, os.path.join(self.context.temp_dir, "results.json")
             )
-            logging.info(f"Copied results.json to {self.context.temp_dir}")
+            logging.debug(f"Copied results.json to {self.context.temp_dir}")
         else:
             logging.warning(f"results.json not found at {results_path}")
 
@@ -194,7 +231,7 @@ class SubmissionHelper:
         if latest_video:
             output_path = os.path.join(self.context.temp_dir, "replay.mp4")
             convert_video(latest_video, output_path)
-            logging.info(f"Converted and copied video to {output_path}")
+            logging.debug(f"Converted and copied video to {output_path}")
         else:
             logging.warning(
                 f"No matching video file found for '{self.context.video_name}' in {video_dir}"

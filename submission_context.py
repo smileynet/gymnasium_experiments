@@ -32,6 +32,11 @@ class SubmissionContext:
         """Get the directory containing video files."""
         return os.path.join(self.outputs_dir, "videos")
 
+    def get_model_name(self) -> str:
+        """Get the name of the model."""
+        return f"{self.model_architecture.lower()}-{self.env_id}"
+
     def get_repo_id(self) -> str:
         """Get the repository ID for Hugging Face Hub."""
-        return f"{self.hf_username}/{self.env_id}-{self.model_architecture}"
+        model_name = self.get_model_name()
+        return f"{self.hf_username}/{model_name}"
