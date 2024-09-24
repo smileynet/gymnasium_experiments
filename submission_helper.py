@@ -114,10 +114,9 @@ class SubmissionHelper:
             f"Generated and saved model card to {self.context.temp_dir}/README.md"
         )
 
-
     def validate_submission_files(self) -> bool:
         """Validate that all required files are present in the temporary directory."""
-        model_name = self.context.get_model_name() + '.zip'
+        model_name = self.context.get_model_name() + ".zip"
         required_files = [
             model_name,
             "results.json",
@@ -142,11 +141,6 @@ class SubmissionHelper:
 
     def submit_to_hub(self):
         """Submit the model and associated files to Hugging Face Hub."""
-        try:
-            self.validate_submission_files()
-        except Exception as e:
-            logger.error(f"Error validating submission files: {str(e)}")
-            raise
 
         try:
             login(token=self.context.hf_token)
@@ -268,7 +262,8 @@ class SubmissionHelper:
 
         submit = Confirm.ask(
             "[bright_yellow]Do you want to submit the model to Hugging Face Hub?[/bright_yellow]",
-             default=True)
+            default=True,
+        )
 
         return submit
 

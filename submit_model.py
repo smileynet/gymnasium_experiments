@@ -18,24 +18,24 @@ def main():
         logger.error(f"Error during evaluation: {e}")
         return
 
-    if helper.prompt_for_submission():
-        try:
-            if not helper.prepare_submission_files():
-                logger.error("Failed to prepare submission files")
-                return
+    try:
+        if not helper.prepare_submission_files():
+            logger.error("Failed to prepare submission files")
+            return
 
-            if not helper.validate_submission_files():
-                logger.error("Submission files validation failed")
-                return
+        if not helper.validate_submission_files():
+            logger.error("Submission files validation failed")
+            return
 
+        if helper.prompt_for_submission():
             console.print("Submitting to the hub...", style="bright_green")
             helper.submit_to_hub()
-        except Exception as e:
-            logger.error(f"Error during submission process: {e}")
-        finally:
-            helper.cleanup()
-    else:
-        console.print("Model submission cancelled", style="bright_red")
+        else:
+            console.print("Model submission cancelled", style="bright_red")
+    except Exception as e:
+        logger.error(f"Error during submission process: {e}")
+    finally:
+        helper.cleanup()
 
 
 if __name__ == "__main__":
