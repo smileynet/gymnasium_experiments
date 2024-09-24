@@ -1,11 +1,11 @@
 import argparse
 import glob
 import json
-import logging
 import os
-from datetime import datetime
 
-import ffmpeg
+from dotenv import load_dotenv
+
+from logging_config import logger
 
 
 def get_latest_video(video_dir, video_name):
@@ -23,37 +23,12 @@ def get_latest_video(video_dir, video_name):
     matching_files = glob.glob(pattern)
 
     if not matching_files:
-        logging.warning(f"No video files found matching pattern: {pattern}")
+        logger.warning(f"No video files found matching pattern: {pattern}")
         return None
 
     latest_file = max(matching_files, key=os.path.getmtime)
-    logging.info(f"Latest video file found: {latest_file}")
+    logger.info(f"Latest video file found: {latest_file}")
     return latest_file
-
-
-def convert_video(input_path, output_path):
-    """
-    Convert a video file to mp4 format using ffmpeg.
-
-    Args:
-        input_path (str): Path to the input video file.
-        output_path (str): Path where the converted video will be saved.
-
-    Raises:
-        ffmpeg.Error: If an error occurs during video conversion.
-    """
-    try:
-        (
-            ffmpeg.input(input_path)
-            .output(output_path, vcodec="libx264", acodec="aac", strict="experimental")
-            .overwrite_output()
-            .run(capture_stdout=True, capture_stderr=True)
-        )
-        logging.info(f"Video successfully converted and saved to {output_path}")
-    except ffmpeg.Error as e:
-        logging.error(f"Error occurred during video conversion: {e.stderr.decode()}")
-        raise
-
 
 def parse_arguments():
     """
@@ -72,9 +47,9 @@ def parse_arguments():
     if args.params:
         try:
             params = json.loads(args.params)
-            logging.info("Using provided parameters")
+            logger.info("Using provided parameters")
         except json.JSONDecodeError as e:
-            logging.error(f"Invalid JSON string for parameters: {e}")
+            logger.error(f"Invalid JSON string for parameters: {e}")
             raise ValueError("Invalid JSON string for parameters") from e
     else:
         params = {
@@ -89,32 +64,23 @@ def parse_arguments():
             "vf_coef": 0.5,
             "max_grad_norm": 0.5,
         }
-        logging.info("Using default parameters")
+        logger.info("Using default parameters")
 
-    logging.debug(f"Model parameters: {json.dumps(params, indent=2)}")
+    logger.debug(f"Model parameters: {json.dumps(params, indent=2)}")
     return params
 
+def get_db_url():
+    load_dotenv()
 
-def setup_logging():
-    """
-    Set up logging configuration.
+    db_name = os.getenv('DB_NAME', 'optuna')
+    db_user = os.getenv('DB_USER')
+    db_password = os.getenv('DB_PASSWORD')
+    db_host = os.getenv('DB_HOST')
+    db_port = os.getenv('DB_PORT', '3306')
 
-    Returns:
-        logging.Logger: Configured logger object.
-    """
-    try:
-        os.makedirs("./logs", exist_ok=True)
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            filename=f"./logs/log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
-        )
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        console_handler.setFormatter(formatter)
-        logging.getLogger().addHandler(console_handler)
-        return logging.getLogger(__name__)
-    except Exception as e:
-        print(f"Error setting up logging: {e}")
-        raise
+    db_string = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    logger.debug(f"Database string: {db_string}")
+
+    if all([db_user, db_password, db_host]):
+        return db_string
+    return None

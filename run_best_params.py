@@ -1,11 +1,12 @@
 import argparse
 import logging
-import os
 import sys
 
 import optuna
 from dotenv import load_dotenv
 from train import train_model
+
+from utils import get_db_url
 
 # Load environment variables
 load_dotenv()
@@ -15,18 +16,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-def get_db_url():
-    db_name = os.getenv('DB_NAME', 'optuna')
-    db_user = os.getenv('DB_USER')
-    db_password = os.getenv('DB_PASSWORD')
-    db_host = os.getenv('DB_HOST')
-    db_port = os.getenv('DB_PORT', '3306')
-    db_ssl_mode = os.getenv('DB_SSL_MODE', 'require')
-
-    if all([db_user, db_password, db_host]):
-        return f"mysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?ssl_mode={db_ssl_mode}"
-    return None
 
 def load_best_params(study_name, storage=None):
     try:

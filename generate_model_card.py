@@ -1,6 +1,10 @@
-import os
 import logging
+import os
+
+import yaml
 from dotenv import load_dotenv
+
+from submission_context import SubmissionContext
 from utils import parse_arguments
 
 logging.basicConfig(
@@ -8,61 +12,38 @@ logging.basicConfig(
 )
 
 
-def generate_model_card(model_name, env_id, mean_reward, std_reward, hyperparameters):
+def generate_model_card(context):
     """
-    Generate a model card in markdown format.
+    Generate a model card in markdown format with metadata and update the context.
 
     Args:
-        model_name (str): Name of the model (e.g., "PPO")
-        env_id (str): ID of the environment (e.g., "LunarLander-v2")
-        mean_reward (float): Mean reward from evaluation
-        std_reward (float): Standard deviation of reward from evaluation
-        hyperparameters (dict): Dictionary of hyperparameters used for training
-
-    Returns:
-        str: Markdown content of the model card
+        context (SubmissionContext): Context object containing all necessary information
 
     Raises:
-        ValueError: If HF_USERNAME is not set in the .env file
+        ValueError: If HF_USERNAME is not set in the context
     """
 
-    load_dotenv()
-
-    username = os.getenv("HF_USERNAME")
-    if not username:
-        raise ValueError("HF_USERNAME not set in .env file")
+    if not context.hf_username:
+        raise ValueError("HF_USERNAME not set in context")
 
     hyperparams_str = "{\n"
-    for key, value in hyperparameters.items():
+    for key, value in context.hyperparameters.items():
         if isinstance(value, str):
             hyperparams_str += f"    '{key}': '{value}',\n"
         else:
             hyperparams_str += f"    '{key}': {value},\n"
     hyperparams_str += "}"
 
-    model_card = f"""
+    metadata_yaml = yaml.dump(context.metadata, default_flow_style=False)
+
+    context.model_card = f"""
 ---
-library_name: stable-baselines3
-tags:
-- {env_id}
-- deep-reinforcement-learning
-- reinforcement-learning
-- gymnasium
-model-index:
-- name: {model_name}
-  results:
-  - task:
-      type: reinforcement-learning
-      name: {env_id}
-    metrics:
-      - type: mean_reward
-        value: {mean_reward:.2f} +/- {std_reward:.2f}
-        name: mean_reward
+{metadata_yaml.strip()}
 ---
 
-# {model_name} Agent playing {env_id}
+# {context.model_architecture} Agent playing {context.env_id}
 
-This is a trained model of a {model_name} agent playing {env_id} using the [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) library.
+This is a trained model of a {context.model_architecture} agent playing {context.env_id} using the [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) library.
 
 ## Usage
 
@@ -70,13 +51,13 @@ To use this model with Stable-Baselines3, follow these steps:
 
 ```python
 import gymnasium as gym
-from stable_baselines3 import {model_name}
+from stable_baselines3 import {context.model_architecture}
 
 # Create the environment
-env = gym.make("{env_id}")
+env = gym.make("{context.env_id}")
 
 # Load the trained model
-model = {model_name}.load("path/to/model.zip")
+model = {context.model_architecture}.load("path/to/model.zip")
 
 # Run the model
 obs, info = env.reset()
@@ -91,7 +72,7 @@ env.close()
 ```
 
 ## Environment
-The {env_id} environment is part of the [Gymnasium](https://gymnasium.farama.org/) library. 
+The {context.env_id} environment is part of the Gymnasium library.
 
 ## Training
 The model was trained using the following hyperparameters:
@@ -100,21 +81,19 @@ The model was trained using the following hyperparameters:
 {hyperparams_str}
 ```
 
-### Results
-The trained agent achieved a mean reward of {mean_reward:.2f} +/- {std_reward:.2f} over {os.getenv('N_EVAL_EPISODES', '10')} evaluation episodes.
-"""
-
-    return model_card
+## Results
+The trained agent achieved a mean reward of {context.results['mean_reward']:.2f} +/- {context.results['std_reward']:.2f} over {context.n_eval_episodes} evaluation episodes. """
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     try:
         load_dotenv()
 
-        model_name = os.getenv("MODEL_NAME", "PPO")
+        model_architecture = os.getenv("MODEL_NAME", "PPO")
         env_id = os.getenv("ENV_NAME", "LunarLander-v2")
         mean_reward = float(os.getenv("MEAN_REWARD", "200"))
         std_reward = float(os.getenv("STD_REWARD", "10"))
+        n_eval_episodes = int(os.getenv("N_EVAL_EPISODES", "10"))
 
         params = parse_arguments()
 
@@ -122,17 +101,47 @@ if __name__ == "main":
         if not outputs_dir:
             raise ValueError("OUTPUTS_DIR not set in .env file")
 
-        env_output_dir = os.path.join(outputs_dir, env_id)
+        context = SubmissionContext()
+        context.hyperparameters = parse_arguments()
+        context.results = {"mean_reward": mean_reward, "std_reward": std_reward}
 
-        os.makedirs(env_output_dir, exist_ok=True)
+        context.metadata = {
+            "library_name": "stable-baselines3",
+            "tags": [
+                context.env_id,
+                "deep-reinforcement-learning",
+                "reinforcement-learning",
+                "gymnasium",
+            ],
+            "model-index": [
+                {
+                    "name": context.model_architecture,
+                    "results": [
+                        {
+                            "task": {
+                                "type": "reinforcement-learning",
+                                "name": context.env_id,
+                            },
+                            "metrics": [
+                                {
+                                    "type": "mean_reward",
+                                    "value": f"{context.results['mean_reward']:.2f} +/- {context.results['std_reward']:.2f}",
+                                    "name": "mean_reward",
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
 
-        model_card = generate_model_card(
-            model_name, env_id, mean_reward, std_reward, params
-        )
+        # Generate the model card
+        generate_model_card(context)
 
-        readme_path = os.path.join(env_output_dir, "README.md")
+        # Write the model card to OUTPUT_DIR/README.md
+        readme_path = os.path.join(outputs_dir, "README.md")
         with open(readme_path, "w") as f:
-            f.write(model_card)
+            f.write(context.model_card)
 
         logging.info(f"Model card generated and saved as {readme_path}")
 

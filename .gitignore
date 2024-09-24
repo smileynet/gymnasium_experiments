@@ -5,6 +5,7 @@ outputs/
 models/
 videos/
 examples/
+temp/
 
 # Python bytecode
 __pycache__/
