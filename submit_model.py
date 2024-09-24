@@ -3,6 +3,19 @@ from submission_helper import SubmissionHelper
 
 
 def main():
+    """
+    Main function to handle the model submission process.
+
+    This function orchestrates the entire submission process, including:
+    1. Loading the model
+    2. Evaluating and recording results
+    3. Preparing submission files
+    4. Validating submission files
+    5. Submitting to the hub (if confirmed by the user)
+
+    The function uses a SubmissionHelper instance to perform these tasks
+    and handles various exceptions that may occur during the process.
+    """
     logger.info("Starting submission process")
     helper = SubmissionHelper()
 
