@@ -152,6 +152,26 @@ wheels = [
 ]
 
 [[package]]
+name = "av"
+version = "13.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/df/4f77aa98b998e1a19622b7a45da07884a053826e9038138d8023208e31e5/av-13.0.0.tar.gz", hash = "sha256:7fb1a5588cd8ce4d0564ddf82221f886541ea2d5152f15e63ab890430dcd3c31", size = 3884902 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/90/f8120cebf0b86ff70691603a6fb1ef473d1fd9c99db058d0413e9a630538/av-13.0.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:9eaf76c3a8a40dc3424ee9360b457143699d96f6e3faffb00867fd747b821ab9", size = 24238853 },
+    { url = "https://files.pythonhosted.org/packages/62/7d/090813d188eebbe183acad6e0cfbd9cdeca0e7f7318a0a3bd6f44ac7d16f/av-13.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:623809f0684bf4379328ced38a25c295969997ba574ed17b99fa4ee3aa564d66", size = 19446605 },
+    { url = "https://files.pythonhosted.org/packages/71/ec/bdc954939463127ca38ee023061be0ac89bdf2f2de6ab23f6a1d8112d070/av-13.0.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8dc441b3899f1eb259af17acb2e5218762dcc99a4fbd6fe4d1f4155e253728b2", size = 32317356 },
+    { url = "https://files.pythonhosted.org/packages/00/78/8d808f4868862b1b539ffd9af1775792f128a903f134c2dbfdb39a7799e3/av-13.0.0-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8b9654f9261ba123377b95fd5a9214e05ba43d7545cb41a5ae2dd5ea5fe6fbc9", size = 31666294 },
+    { url = "https://files.pythonhosted.org/packages/f7/fd/ee64d545a60c73795285cbe70f27e49b46c40e1ca3c8c35411b75ea310e6/av-13.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8157821b9da3814720d9b7ea45d961275dc73be8161eae7258afe2f737da5779", size = 34243366 },
+    { url = "https://files.pythonhosted.org/packages/c1/49/08552c5c2b838016cbba90547a0c082e9e8b700eaaf90c8eb0c11fec595e/av-13.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:736c4a9cb6ef6e5f3aa1cb12609a615f6c93bf16f36439010dc1ba160beed827", size = 25751891 },
+    { url = "https://files.pythonhosted.org/packages/4e/fd/08eeec9bd07129242989cb69cb45be5ff4c394af27b661d7c4428c460669/av-13.0.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:4074615d89852dc8d7aa852b9162fe855bc2c6850e0cab74a875d4e72eefe343", size = 24197575 },
+    { url = "https://files.pythonhosted.org/packages/f3/0a/70d1848f325fd595f009f419e11134020aca1e0bf99c0041c0f5a767a01d/av-13.0.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:a2df1f311610dcedbd0b08a5a419ae17076aa9cd808a6d4f0b5cb8c69d604e9f", size = 19406017 },
+    { url = "https://files.pythonhosted.org/packages/3f/10/2c1007829950cc1b7b17593d0d304adf008331729083af3d9b7c34e10b52/av-13.0.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b1990d1398c25d90045c771450a64bf9aff33d8e6c89568fbbc5cc85ec6ceaa1", size = 31966860 },
+    { url = "https://files.pythonhosted.org/packages/1d/d7/f64af0713a669560ef33eea30c08add46916cab4ff0b26b473c14a9ff32c/av-13.0.0-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3303584abfcc2787a3dcf303fddcab0968329a309360c22348cc2c31e060f8d9", size = 31333914 },
+    { url = "https://files.pythonhosted.org/packages/c5/6c/647368ea1b60059a0a0dec3eae7c76b3aaec3e222c3cbcb54af0c2716d37/av-13.0.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:05de5e2e6dde42d804dc41aa36102f64849fc72d0c7f9afc28406a7b240dba7a", size = 33908881 },
+    { url = "https://files.pythonhosted.org/packages/2a/bc/e2305f5e18eb47b5eac80e29de2fc1110898bb48131bb2a6d0d893080969/av-13.0.0-cp313-cp313-win_amd64.whl", hash = "sha256:f9cea8906abf010f6d4894c7cad52e257667d0a498d4eec7e5beb4eff519d3ff", size = 25724252 },
+]
+
+[[package]]
 name = "babel"
 version = "2.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -561,6 +581,7 @@ name = "gymnasium-experiments"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "av" },
     { name = "ffmpeg-python" },
     { name = "gunicorn" },
     { name = "gymnasium", extra = ["box2d"] },
@@ -595,6 +616,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "av", specifier = ">=13.0.0" },
     { name = "ffmpeg-python", specifier = ">=0.2.0" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "gymnasium", extras = ["box2d"], specifier = ">=0.29.1" },

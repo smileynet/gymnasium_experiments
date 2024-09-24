@@ -1,7 +1,9 @@
 import os
-from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
+from rich.table import Table
+
+from logging_config import console, logger
 
 
 class SubmissionContext:
@@ -19,6 +21,20 @@ class SubmissionContext:
         self.model_architecture = os.getenv("MODEL_ARCHITECTURE", "PPO")
         self.hyperparameters = {}
         self.metadata = {}
+
+        self.display_context()
+
+    def display_context(self):
+        table = Table(title="Submission Context")
+        table.add_column("Setting", style="cyan")
+        table.add_column("Value", style="magenta")
+
+        for key, value in self.__dict__.items():
+            if not key.startswith("_"):
+                table.add_row(key, str(value))
+
+        console.print(table)
+        logger.debug("Submission context displayed")
 
     def get_model_path(self) -> str:
         """Get the full path to the best model file."""

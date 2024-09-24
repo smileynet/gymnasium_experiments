@@ -1,12 +1,9 @@
 import argparse
 import glob
 import json
-import logging
 import os
-from datetime import datetime
 
 from dotenv import load_dotenv
-from imageio.plugins import ffmpeg
 
 from logging_config import logger
 
@@ -32,31 +29,6 @@ def get_latest_video(video_dir, video_name):
     latest_file = max(matching_files, key=os.path.getmtime)
     logger.info(f"Latest video file found: {latest_file}")
     return latest_file
-
-
-def convert_video(input_path, output_path):
-    """
-    Convert a video file to mp4 format using ffmpeg.
-
-    Args:
-        input_path (str): Path to the input video file.
-        output_path (str): Path where the converted video will be saved.
-
-    Raises:
-        ffmpeg.Error: If an error occurs during video conversion.
-    """
-    try:
-        (
-            ffmpeg.input(input_path)
-            .output(output_path, vcodec="libx264", acodec="aac", strict="experimental")
-            .overwrite_output()
-            .run(capture_stdout=True, capture_stderr=True)
-        )
-        logging.info(f"Video successfully converted and saved to {output_path}")
-    except ffmpeg.Error as e:
-        logging.error(f"Error occurred during video conversion: {e.stderr.decode()}")
-        raise
-
 
 def parse_arguments():
     """

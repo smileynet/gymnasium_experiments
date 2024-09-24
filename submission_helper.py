@@ -1,47 +1,49 @@
 import json
-import logging
 import os
 import shutil
 import zipfile
 
 import stable_baselines3
 from huggingface_hub import HfApi, login
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.prompt import Confirm
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 
 from evaluate_model import evaluate_and_record
-from generate_agent import generate_agent_pt
 from generate_model_card import generate_model_card
+from logging_config import console, logger
 from submission_context import SubmissionContext
-from utils import convert_video, get_latest_video, parse_arguments
+from utils import get_latest_video, parse_arguments
 
 
 class SubmissionHelper:
     def __init__(self):
         self.context = SubmissionContext()
-        self._setup_logging()
-
-    def _setup_logging(self):
-        """Configure logging for the script."""
-        logging.basicConfig(
-            level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
 
     def load_model(self, model_path=None):
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("[green]Loading model...", total=None)
+            if model_path is None:
+                model_path = self.context.get_model_path()
+
+            if not os.path.exists(model_path):
+                raise FileNotFoundError(f"Model file not found: {model_path}")
+
+            logger.debug(f"Loading model from {model_path}")
+            model = PPO.load(model_path)
+            logger.debug(f"Model loaded from {model_path}")
+
+            self.context.model = model
+            self.context.hyperparameters = parse_arguments()
+            progress.update(task, completed=True)
+        logger.info("Model loaded successfully")
+
         """Load the trained model from the specified path."""
-
-        if model_path is None:
-            model_path = self.context.get_model_path()
-
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found: {model_path}")
-
-        logging.debug(f"Loading model from {model_path}")
-        model = PPO.load(model_path)
-        logging.debug(f"Model loaded from {model_path}")
-
-        self.context.model = model
-        self.context.hyperparameters = parse_arguments()
 
         return model
 
@@ -53,14 +55,15 @@ class SubmissionHelper:
             self._convert_and_copy_video()
             self._create_metadata()
             self._generate_model_card()
-            self._generate_agent_pt()
             self._generate_config()
             return True
         except Exception as e:
-            logging.error(f"Error preparing submission files: {str(e)}")
+            logger.error(f"Error preparing submission files: {str(e)}")
             return False
 
     def _create_metadata(self):
+        from rich.table import Table
+
         self.context.metadata = {
             "library_name": "stable-baselines3",
             "tags": [
@@ -91,28 +94,32 @@ class SubmissionHelper:
             ],
         }
 
+        from rich.table import Table
+
+        table = Table(title="Metadata")
+        table.add_column("Key", style="cyan")
+        table.add_column("Value", style="magenta")
+
+        for key, value in self.context.metadata.items():
+            table.add_row(str(key), str(value))
+
+        console.print(table)
+        logger.debug("Metadata created and displayed")
+
     def _generate_model_card(self):
         generate_model_card(self.context)
         with open(os.path.join(self.context.temp_dir, "README.md"), "w") as f:
             f.write(self.context.model_card)
-        logging.debug(
+        logger.debug(
             f"Generated and saved model card to {self.context.temp_dir}/README.md"
         )
 
-    def _generate_agent_pt(self):
-        model_path = self.context.get_model_path()
-        os.makedirs(self.context.temp_dir, exist_ok=True)
-        output_path = os.path.join(self.context.temp_dir, "agent.pt")
-        success = generate_agent_pt(model_path, self.context.env_id, output_path)
-        if not success:
-            raise RuntimeError("Failed to generate agent.pt")
-        logging.debug(f"Generated agent.pt at {output_path}")
 
     def validate_submission_files(self) -> bool:
         """Validate that all required files are present in the temporary directory."""
+        model_name = self.context.get_model_name() + '.zip'
         required_files = [
-            self.context.best_model_name,
-            "agent.pt",
+            model_name,
             "results.json",
             "replay.mp4",
             "README.md",
@@ -125,12 +132,12 @@ class SubmissionHelper:
         ]
 
         if missing_files:
-            logging.error(
+            logger.error(
                 f"Missing required files for submission: {', '.join(missing_files)}"
             )
             return False
 
-        logging.debug("All required files for submission are present")
+        logger.debug("All required files for submission are present")
         return True
 
     def submit_to_hub(self):
@@ -138,7 +145,7 @@ class SubmissionHelper:
         try:
             self.validate_submission_files()
         except Exception as e:
-            logging.error(f"Error validating submission files: {str(e)}")
+            logger.error(f"Error validating submission files: {str(e)}")
             raise
 
         try:
@@ -148,7 +155,7 @@ class SubmissionHelper:
 
             tags = self.context.metadata.get("tags", [])
 
-            logging.debug(
+            logger.debug(
                 f"Creating repository {repo_id} on Hugging Face Hub with tags:\n {tags}"
             )
 
@@ -164,15 +171,15 @@ class SubmissionHelper:
                 repo_type="model",
                 path_in_repo=".",
                 commit_message="Upload model files",
-                commit_description="Uploading model files including README, agent.pt, and metadata",
+                commit_description="Uploading model files including README, and metadata",
                 ignore_patterns=[".*"],
             )
 
-            logging.info(
+            logger.info(
                 f"Model and results submitted to Hugging Face Hub: https://huggingface.co/{repo_id}"
             )
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"An error occurred during submission to Hugging Face Hub: {str(e)}"
             )
             raise
@@ -199,19 +206,17 @@ class SubmissionHelper:
         with open(os.path.join(unzipped_model_dir, "data")) as json_file:
             data = json.load(json_file)
 
-        logging.debug(f"config.json generated at {self.context.temp_dir}")
+        logger.debug(f"config.json generated at {self.context.temp_dir}")
 
     def _copy_model_zip(self):
         model_path = self.context.get_model_path()
         os.makedirs(self.context.temp_dir, exist_ok=True)
-        if os.path.exists(model_path):
-            shutil.copy(
-                model_path,
-                os.path.join(self.context.temp_dir, self.context.best_model_name),
-            )
-            logging.debug(f"Copied model zip to {self.context.temp_dir}")
-        else:
-            raise FileNotFoundError(f"Model zip not found at {model_path}")
+        model_name = self.context.get_model_name()
+        model_name = model_name + ".zip"
+        shutil.copy(
+            model_path,
+            os.path.join(self.context.temp_dir, model_name),
+        )
 
     def _copy_results_json(self):
         results_path = self.context.get_results_path()
@@ -220,9 +225,9 @@ class SubmissionHelper:
             shutil.copy(
                 results_path, os.path.join(self.context.temp_dir, "results.json")
             )
-            logging.debug(f"Copied results.json to {self.context.temp_dir}")
+            logger.debug(f"Copied results.json to {self.context.temp_dir}")
         else:
-            logging.warning(f"results.json not found at {results_path}")
+            logger.warning(f"results.json not found at {results_path}")
 
     def _convert_and_copy_video(self):
         video_dir = self.context.get_video_dir()
@@ -230,10 +235,10 @@ class SubmissionHelper:
         os.makedirs(self.context.temp_dir, exist_ok=True)
         if latest_video:
             output_path = os.path.join(self.context.temp_dir, "replay.mp4")
-            convert_video(latest_video, output_path)
-            logging.debug(f"Converted and copied video to {output_path}")
+            shutil.copy(latest_video, output_path)
+            logger.debug(f"Converted and copied video to {output_path}")
         else:
-            logging.warning(
+            logger.warning(
                 f"No matching video file found for '{self.context.video_name}' in {video_dir}"
             )
 
@@ -248,21 +253,24 @@ class SubmissionHelper:
                 video_length=1000,
             )
             self.context.results = results
-            print(
-                "Be sure to double check the video and results to ensure the right model was loaded."
+            console.print(
+                "Be sure to double check the video and results to ensure the right model was loaded.",
+                style="bold bright_magenta",
             )
             return results
         except Exception as e:
-            logging.error(f"Error during evaluation and recording: {str(e)}")
+            logger.error(f"Error during evaluation and recording: {str(e)}")
         finally:
             env.close()
 
     def prompt_for_submission(self) -> bool:
         """Prompt the user to confirm submission to Hugging Face Hub."""
-        submit = input(
-            "Do you want to submit the model to Hugging Face Hub? (y/n): "
-        ).lower()
-        return submit == "y"
+
+        submit = Confirm.ask(
+            "[bright_yellow]Do you want to submit the model to Hugging Face Hub?[/bright_yellow]",
+             default=True)
+
+        return submit
 
     def cleanup(self):
         """Clean up the temporary directory after submission."""

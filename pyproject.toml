@@ -5,6 +5,7 @@ description = "A collection of gym-type evnvironment related scripts"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "av>=13.0.0",
     "ffmpeg-python>=0.2.0",
     "gunicorn>=23.0.0",
     "gymnasium[box2d]>=0.29.1",

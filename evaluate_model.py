@@ -1,19 +1,20 @@
 import json
-import logging
 import os
 from datetime import datetime
+import sys
 
 import gymnasium as gym
+import moviepy.config as mpconfig
 from dotenv import load_dotenv
+from sqlalchemy import Null
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecVideoRecorder
 
-load_dotenv()
+from logging_config import console, logger
 
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+load_dotenv()
 
 
 def evaluate_and_record(
@@ -38,12 +39,13 @@ def evaluate_and_record(
     try:
 
         def make_env():
-            return gym.make(env_id, render_mode="rgb_array")
+            env = gym.make(env_id, render_mode="rgb_array")
+            return Monitor(env)
 
-        logging.debug(f"Loading eval environment for {env_id}")
+        logger.debug(f"Loading eval environment for {env_id}")
         eval_env = DummyVecEnv([make_env for _ in range(1)])
-        logging.debug(f"Observation space: {eval_env.observation_space}")
-        logging.debug(f"Action space: {eval_env.action_space}")
+        logger.debug(f"Observation space: {eval_env.observation_space}")
+        logger.debug(f"Action space: {eval_env.action_space}")
 
         outputs_dir = os.getenv("OUTPUTS_DIR", "outputs")
         os.makedirs(outputs_dir, exist_ok=True)
@@ -63,8 +65,12 @@ def evaluate_and_record(
 
         eval_env.close()
 
-        logging.info(f"Preview video '{video_name}' saved in '{video_dir}' directory")
-        logging.info(f"Mean reward: {mean_reward:.2f} +/- {std_reward:.2f}")
+        console.print(
+            f"[green]Preview video '[bold]{video_name}[/bold]' saved in '[bold]{video_dir}[/bold]' directory[/green]"
+        )
+        console.print(
+            f"[cyan]Mean reward: [bold]{mean_reward:.2f}[/bold] +/- [bold]{std_reward:.2f}[/bold][/cyan]"
+        )
 
         results = {
             "env_id": env_id,
@@ -78,15 +84,14 @@ def evaluate_and_record(
         with open(results_path, "w") as f:
             json.dump(results, f, indent=2)
 
-        logging.info(f"Evaluation results saved to {results_path}")
+        console.print(
+            f"[green]Evaluation results saved to [bold]{results_path}[/bold][/green]"
+        )
 
         return results
     except Exception as e:
-        logging.error(f"An error occurred during evaluation: {str(e)}")
-        raise
+        logger.error(f"An error occurred during evaluation: {str(e)}")
 
-
-if __name__ == "__main__":
     try:
         env_id = os.getenv("ENV_NAME", "LunarLander-v2")
         model_dir = os.getenv("MODEL_DIR", "models")
@@ -99,10 +104,8 @@ if __name__ == "__main__":
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found: {model_path}")
 
-        logging.info(f"Loading model from {model_path}")
-        model = PPO.load(model_path)
-        logging.info(f"Model loaded from {model_path}")
-
+        logger.info(f"Loading model from {model_path}")
+        logger.info(f"Model loaded from {model_path}")
         evaluate_and_record(model, env_id, video_name, n_eval_episodes=n_eval_episodes)
     except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
+        logger.error(f"An error occurred: {str(e)}")
